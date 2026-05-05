@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bora Lá — Academia sem surpresa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#080808;
+  --white:#f2f2ee;
+  --green:#1db954;
+  --green2:#17a349;
+  --muted:#606060;
+  --border:#1a1a1a;
+  --red:#ff3b3b;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--black);
+  color:var(--white);
+  font-family:'DM Sans',sans-serif;
+  font-weight:300;
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* ─── CURSOR ─────────────────────────────── */
+#cursor{
+  position:fixed;width:12px;height:12px;
+  background:var(--green);border-radius:50%;
+  pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .3s,height .3s,background .3s;
+  mix-blend-mode:difference;
+}
+#cursor.hov{
+  width:56px;height:56px;
+  background:transparent;
+  border:1.5px solid var(--green);
+}
+#cursor-trail{
+  position:fixed;width:40px;height:40px;
+  border:1px solid rgba(29,185,84,.2);
+  border-radius:50%;
+  pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+}
+
+/* ─── NOISE ───────────────────────────────── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.025;pointer-events:none;z-index:9997;
+}
+
+/* ─── NAV ─────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.4rem 3rem;transition:background .4s;
+}
+nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:.04em;color:var(--white);text-decoration:none;}
+.nav-logo em{color:var(--green);font-style:normal;}
+.nav-links{display:flex;gap:2.5rem;list-style:none;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;transition:color .2s;}
+.nav-links a:hover{color:var(--white);}
+.nav-cta{background:var(--green);color:var(--black) !important;padding:.5rem 1.4rem;border-radius:2rem;font-weight:500 !important;transition:background .2s,transform .2s !important;}
+.nav-cta:hover{background:var(--green2) !important;transform:translateY(-1px);}
+
+/* ─── HERO ────────────────────────────────── */
+#hero{
+  min-height:100svh;
+  display:grid;
+  grid-template-rows:1fr auto;
+  padding:0;
+  position:relative;overflow:hidden;
+  background:var(--black);
+}
+
+/* fundo: vinheta central verde */
+#hero::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 80%, rgba(29,185,84,.07) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+/* conversa — parte central */
+.hero-convo{
+  display:flex;flex-direction:column;
+  justify-content:center;
+  padding:8rem 3rem 3rem;
+  position:relative;z-index:1;
+  gap:0;
+}
+
+/* cada linha da conversa */
+.hc-line{
+  display:flex;align-items:baseline;gap:.8rem;
+  overflow:hidden;
+  padding:.15rem 0;
+}
+.hc-line .hc-text{
+  font-family:'DM Sans',sans-serif;
+  font-size:clamp(1.45rem,4.2vw,2.6rem);
+  font-weight:300;
+  line-height:1.25;
+  color:var(--muted);
+  transform:translateY(100%);
+  display:block;
+  transition:none;
+}
+/* frases que "chegaram" */
+.hc-line.visible .hc-text{
+  animation:lineReveal .65s cubic-bezier(.16,1,.3,1) forwards;
+}
+.hc-line:nth-child(1) .hc-text{animation-delay:.1s;}
+.hc-line:nth-child(2) .hc-text{animation-delay:.55s;}
+.hc-line:nth-child(3) .hc-text{animation-delay:1.05s;}
+.hc-line:nth-child(4) .hc-text{animation-delay:1.6s;}
+.hc-line:nth-child(5) .hc-text{animation-delay:2.2s;}
+
+@keyframes lineReveal{
+  from{transform:translateY(100%);opacity:0;}
+  to{transform:translateY(0);opacity:1;}
+}
+
+/* destaques nas frases */
+.hc-line .hi{color:var(--white);font-weight:400;}
+.hc-line .hi-green{color:var(--green);font-weight:500;}
+
+/* a frase grande de resposta */
+.hc-line.answer .hc-text{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3.8rem,11vw,8rem);
+  line-height:.95;
+  color:var(--white);
+  letter-spacing:.01em;
+  padding-top:.4rem;
+}
+.hc-line.answer .hi-green{
+  color:var(--green);
+}
+
+/* cursor piscante no fim */
+.hc-cursor{
+  display:inline-block;
+  width:3px;height:clamp(2rem,5vw,3.5rem);
+  background:var(--green);
+  margin-left:.3rem;
+  vertical-align:middle;
+  animation:cursorBlink 1s step-end infinite;
+  opacity:0;
+  transition:opacity .2s;
+}
+.hc-cursor.show{opacity:1;}
+@keyframes cursorBlink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* rodapé do hero */
+.hero-footer{
+  position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:2rem 3rem;
+  border-top:1px solid var(--border);
+  opacity:0;
+  animation:fadeUp .8s 3.2s forwards;
+}
+.hero-footer-left{
+  display:flex;flex-direction:column;gap:.3rem;
+}
+.hf-label{
+  font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+}
+.hf-live{
+  display:flex;align-items:center;gap:.5rem;
+  font-size:.88rem;color:var(--white);
+}
+.hf-dot{
+  width:7px;height:7px;background:var(--green);border-radius:50%;flex-shrink:0;
+  animation:blink2 1.4s ease infinite;
+}
+@keyframes blink2{0%,100%{box-shadow:0 0 0 0 rgba(29,185,84,.7);}50%{box-shadow:0 0 0 8px rgba(29,185,84,0);}}
+
+.hero-footer-right{
+  display:flex;gap:1rem;align-items:center;
+}
+
+.btn-main{
+  background:var(--green);color:var(--black);
+  border:none;padding:.9rem 2.2rem;border-radius:3rem;
+  font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;
+  cursor:none;text-decoration:none;display:inline-block;
+  position:relative;overflow:hidden;transition:transform .25s,background .2s;
+}
+.btn-main::after{
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,.18);
+  transform:translateX(-110%) skewX(-15deg);
+  transition:transform .5s cubic-bezier(.16,1,.3,1);
+}
+.btn-main:hover{transform:translateY(-2px);background:var(--green2);}
+.btn-main:hover::after{transform:translateX(110%) skewX(-15deg);}
+
+.btn-ghost2{
+  color:var(--muted);font-size:.82rem;letter-spacing:.06em;
+  text-decoration:none;display:flex;align-items:center;gap:.5rem;transition:color .2s;
+  white-space:nowrap;
+}
+.btn-ghost2 .arr{transition:transform .2s;}
+.btn-ghost2:hover{color:var(--white);}
+.btn-ghost2:hover .arr{transform:translateX(5px);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── HERO MOBILE ── */
+@media(max-width:640px){
+  .hero-convo{padding:6rem 1.5rem 2rem;}
+  .hero-footer{padding:1.5rem;flex-direction:column;align-items:flex-start;gap:1.2rem;}
+  .hero-footer-right{width:100%;}
+  .btn-main{flex:1;text-align:center;}
+}
+
+/* ─── TICKER ─────────────────────────────── */
+.ticker-wrap{border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;padding:.85rem 0;background:var(--black);}
+.ticker-track{display:flex;width:max-content;animation:tick 25s linear infinite;}
+.ticker-item{white-space:nowrap;padding:0 2rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.12em;color:var(--muted);display:flex;align-items:center;gap:2rem;}
+.tdot{color:var(--green);}
+@keyframes tick{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+/* ─── PROVOCAÇÃO ─────────────────────────── */
+#provoca{padding:8rem 3rem;background:var(--white);color:var(--black);position:relative;overflow:hidden;}
+#provoca::before{
+  content:'?';position:absolute;right:-2rem;top:-3rem;
+  font-family:'Bebas Neue',sans-serif;font-size:42vw;
+  color:rgba(0,0,0,.04);line-height:1;pointer-events:none;user-select:none;
+}
+.provoca-tag{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--green2);margin-bottom:2rem;display:inline-block;border-bottom:1px solid var(--green2);padding-bottom:.3rem;}
+.provoca-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,8vw,7rem);line-height:.93;margin-bottom:3.5rem;}
+.provoca-title em{font-style:normal;color:var(--green2);}
+.provoca-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#d8d8d8;}
+.pv-card{
+  background:var(--white);padding:2.5rem 2rem;
+  position:relative;overflow:hidden;transition:background .3s;
+}
+.pv-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:var(--green);transform:scaleX(0);transform-origin:left;
+  transition:transform .4s cubic-bezier(.16,1,.3,1);
+}
+.pv-card:hover{background:#f5f5f0;}
+.pv-card:hover::after{transform:scaleX(1);}
+.pv-num{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:rgba(0,0,0,.06);line-height:1;margin-bottom:.5rem;transition:color .3s;}
+.pv-card:hover .pv-num{color:rgba(23,163,73,.12);}
+.pv-emoji{font-size:2rem;display:block;margin-bottom:1rem;transition:transform .3s;}
+.pv-card:hover .pv-emoji{transform:rotate(5deg) scale(1.1);}
+.pv-card h3{font-size:1rem;font-weight:500;margin-bottom:.5rem;}
+.pv-card p{font-size:.88rem;color:#666;line-height:1.65;}
+
+/* ─── MANIFESTO ──────────────────────────── */
+#manifesto{padding:7rem 3rem;background:var(--black);position:relative;overflow:hidden;}
+.m-line{
+  display:flex;align-items:baseline;gap:1.5rem;
+  border-bottom:1px solid var(--border);
+  padding:1.6rem 0;overflow:hidden;cursor:default;
+}
+.m-line:first-child{border-top:1px solid var(--border);}
+.m-num{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);min-width:2.5rem;transition:color .3s;}
+.m-text{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,5vw,4.5rem);line-height:1;letter-spacing:.01em;flex:1;transition:color .3s,letter-spacing .35s;}
+.m-arrow{font-size:1.5rem;color:var(--muted);opacity:0;transform:translateX(-10px);transition:opacity .3s,transform .3s;}
+.m-line:hover .m-num{color:var(--green);}
+.m-line:hover .m-text{color:var(--green);letter-spacing:.05em;}
+.m-line:hover .m-arrow{opacity:1;transform:translateX(0);color:var(--green);}
+
+/* ─── COMO FUNCIONA ──────────────────────── */
+#como{padding:8rem 3rem;background:#040404;position:relative;}
+.como-top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:5rem;}
+.como-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,7vw,6rem);line-height:1;}
+.como-sub{color:var(--muted);font-size:.95rem;max-width:260px;line-height:1.7;}
+.steps-wrap{display:grid;grid-template-columns:repeat(4,1fr);position:relative;}
+.steps-wrap::before{
+  content:'';position:absolute;top:2.8rem;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border) 10%,var(--border) 90%,transparent);
+}
+.step2{padding:0 2rem 3rem;border-right:1px solid var(--border);position:relative;transition:background .3s;}
+.step2:last-child{border-right:none;}
+.step2:hover{background:rgba(29,185,84,.025);}
+.step-circle{
+  width:56px;height:56px;border-radius:50%;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--muted);
+  margin-bottom:2.5rem;background:var(--black);
+  transition:border-color .3s,color .3s,background .3s,transform .4s cubic-bezier(.16,1,.3,1);
+  position:relative;z-index:1;
+}
+.step2:hover .step-circle{border-color:var(--green);color:var(--green);background:rgba(29,185,84,.08);transform:scale(1.12);}
+.step2 h3{font-size:1rem;font-weight:500;margin-bottom:.6rem;}
+.step2 p{font-size:.85rem;color:var(--muted);line-height:1.65;}
+.step-icon{font-size:1.8rem;display:block;margin-bottom:1rem;filter:grayscale(1);transition:filter .3s,transform .3s;}
+.step2:hover .step-icon{filter:grayscale(0);transform:scale(1.15);}
+
+/* ─── PLANOS ─────────────────────────────── */
+#planos{padding:8rem 3rem;background:var(--white);color:var(--black);}
+.pl-tag{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--green2);margin-bottom:1rem;display:inline-block;border-bottom:1px solid var(--green2);padding-bottom:.3rem;}
+.pl-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,7vw,6rem);line-height:1;margin-bottom:4rem;}
+.planos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#d8d8d8;}
+.plano{background:var(--white);padding:3rem 2.5rem;position:relative;overflow:hidden;transition:background .3s;}
+.plano::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--black);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.16,1,.3,1);}
+.plano:hover{background:#f5f5f0;}
+.plano:hover::before{transform:scaleX(1);}
+.plano.destaque{background:var(--black);color:var(--white);}
+.plano.destaque::before{background:var(--green);}
+.plano.destaque:hover{background:#0f0f0f;}
+.plano-label{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;opacity:.45;margin-bottom:1.5rem;display:block;}
+.plano-name2{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;letter-spacing:.04em;margin-bottom:.5rem;}
+.plano-price2{font-size:3rem;font-weight:300;line-height:1;margin-bottom:.4rem;}
+.plano-price2 small{font-size:1rem;opacity:.45;}
+.plano-desc2{font-size:.82rem;opacity:.45;margin-bottom:2rem;line-height:1.55;}
+.plano-feats{list-style:none;margin-bottom:2.5rem;display:flex;flex-direction:column;gap:.65rem;}
+.plano-feats li{font-size:.88rem;display:flex;gap:.7rem;align-items:center;}
+.plano-feats li::before{content:'→';color:var(--green);font-size:.8rem;flex-shrink:0;}
+.plano-btn2{display:block;text-align:center;padding:.9rem;border-radius:2rem;font-size:.88rem;font-weight:500;font-family:'DM Sans',sans-serif;text-decoration:none;transition:all .25s;cursor:none;position:relative;overflow:hidden;}
+.plano:not(.destaque) .plano-btn2{border:1px solid #bbb;color:var(--black);}
+.plano:not(.destaque) .plano-btn2:hover{border-color:var(--black);background:var(--black);color:var(--white);}
+.plano.destaque .plano-btn2{background:var(--green);color:var(--black);}
+.plano.destaque .plano-btn2:hover{background:var(--green2);}
+
+/* ─── STATS ──────────────────────────────── */
+#stats{background:var(--green);color:var(--black);padding:6rem 3rem;position:relative;overflow:hidden;}
+#stats::before{content:'BORA';position:absolute;right:-2rem;top:50%;transform:translateY(-50%);font-family:'Bebas Neue',sans-serif;font-size:32vw;color:rgba(0,0,0,.06);line-height:1;pointer-events:none;user-select:none;}
+.stats-grid2{display:grid;grid-template-columns:repeat(3,1fr);position:relative;z-index:1;}
+.stat2{padding:2rem 3rem;border-right:1px solid rgba(0,0,0,.12);}
+.stat2:last-child{border-right:none;}
+.stat2-num{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,8vw,7rem);line-height:1;margin-bottom:.4rem;transition:transform .3s;}
+.stat2:hover .stat2-num{transform:scale(1.05);}
+.stat2 p{font-size:.88rem;opacity:.6;line-height:1.55;}
+
+/* ─── ACADEMIA ───────────────────────────── */
+#academia{padding:8rem 3rem;background:var(--black);position:relative;overflow:hidden;}
+.academia-grid{display:grid;grid-template-columns:1fr 1fr;gap:8rem;align-items:start;}
+.sec-tag2{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:1.5rem;display:block;}
+.ac-big{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,7vw,6.5rem);line-height:.93;margin-bottom:2rem;}
+.academia-left p{font-size:1rem;color:var(--muted);line-height:1.75;max-width:400px;margin-bottom:2.5rem;}
+.academia-steps2{display:flex;flex-direction:column;}
+.as2{display:grid;grid-template-columns:2.5rem 1fr;gap:1.2rem;padding:1.5rem 0;border-bottom:1px solid var(--border);transition:border-color .3s;}
+.as2:last-child{border-bottom:none;}
+.as2:hover{border-color:var(--green);}
+.as2-num{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--green);line-height:1.1;}
+.as2 h4{font-size:.95rem;font-weight:500;margin-bottom:.25rem;}
+.as2 p{font-size:.84rem;color:var(--muted);line-height:1.6;}
+.ac-card{background:var(--green);color:var(--black);padding:3rem;position:relative;overflow:hidden;}
+.ac-card::before{content:'→';position:absolute;right:-1rem;bottom:-2rem;font-family:'Bebas Neue',sans-serif;font-size:14rem;color:rgba(0,0,0,.07);line-height:1;pointer-events:none;}
+.ac-card .tag3{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;opacity:.5;margin-bottom:1rem;display:block;}
+.ac-card h3{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:.93;margin-bottom:1rem;}
+.ac-card p{font-size:.88rem;opacity:.65;line-height:1.6;margin-bottom:2rem;}
+.btn-dark{display:inline-block;background:var(--black);color:var(--white);padding:.9rem 2rem;border-radius:2rem;font-size:.88rem;font-weight:500;font-family:'DM Sans',sans-serif;text-decoration:none;transition:background .2s,transform .2s;cursor:none;}
+.btn-dark:hover{background:#1a1a1a;transform:translateY(-2px);}
+
+/* ─── CTA FINAL ─────────────────────────── */
+#cta-final{padding:10rem 3rem;background:var(--black);text-align:center;position:relative;overflow:hidden;}
+.cta-bg2{position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(29,185,84,.1) 0%,transparent 70%);pointer-events:none;animation:ctaGlow 5s ease-in-out infinite;}
+@keyframes ctaGlow{0%,100%{opacity:1;}50%{opacity:.45;}}
+.cta-pre{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:2rem;display:block;}
+.cta-big{font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,17vw,16rem);line-height:.85;margin-bottom:2rem;position:relative;z-index:1;}
+.cta-big .g{color:var(--green);}
+.cta-sub2{font-size:1.1rem;color:var(--muted);margin-bottom:3rem;position:relative;z-index:1;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.7;}
+.cta-sub2 strong{color:var(--white);font-weight:400;}
+.cta-form{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+.cta-input{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--white);padding:1rem 1.8rem;border-radius:3rem;font-family:'DM Sans',sans-serif;font-size:.95rem;width:300px;outline:none;transition:border-color .3s;}
+.cta-input::placeholder{color:var(--muted);}
+.cta-input:focus{border-color:var(--green);}
+.cta-disc{margin-top:1.5rem;font-size:.75rem;color:#2d2d2d;letter-spacing:.04em;position:relative;z-index:1;}
+
+/* ─── FOOTER ──────────────────────────────── */
+footer{border-top:1px solid var(--border);padding:2.5rem 3rem;display:flex;justify-content:space-between;align-items:center;}
+.ft-logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--muted);letter-spacing:.04em;}
+.ft-logo span{color:var(--green);}
+footer small{font-size:.75rem;color:#252525;}
+.ft-links{display:flex;gap:2rem;}
+.ft-links a{font-size:.75rem;color:#2d2d2d;text-decoration:none;transition:color .2s;}
+.ft-links a:hover{color:var(--white);}
+
+/* ─── REVEAL ──────────────────────────────── */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1);}
+.reveal.on{opacity:1;transform:none;}
+.reveal-l{opacity:0;transform:translateX(-40px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1);}
+.reveal-l.on{opacity:1;transform:none;}
+.reveal-r{opacity:0;transform:translateX(40px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1);}
+.reveal-r.on{opacity:1;transform:none;}
+
+/* ─── MOBILE ──────────────────────────────── */
+@media(max-width:900px){
+  nav{padding:1rem 1.5rem;}
+  .nav-links{display:none;}
+  #provoca,#manifesto,#como,#planos,#stats,#academia,#cta-final{padding:5rem 1.5rem;}
+  .provoca-cards,.steps-wrap,.planos-grid,.stats-grid2,.academia-grid{grid-template-columns:1fr;}
+  .como-top{flex-direction:column;gap:1rem;}
+  .pv-card,.step2{border-right:none !important;border-bottom:1px solid #ddd;}
+  .stat2{border-right:none;border-bottom:1px solid rgba(0,0,0,.1);}
+  .stat2:last-child{border-bottom:none;}
+  footer{flex-direction:column;gap:1.5rem;text-align:center;}
+  body{cursor:auto;}
+  #cursor,#cursor-trail{display:none;}
+  /* hero mobile */
+  .hero-convo{padding:5.5rem 1.5rem 2rem;gap:.2rem;}
+  .hero-footer{padding:1.5rem;flex-direction:column;align-items:flex-start;gap:1.2rem;border-top:1px solid var(--border);}
+  .hero-footer-right{width:100%;flex-direction:column;}
+  .btn-main{text-align:center;width:100%;}
+  .btn-ghost2{justify-content:center;width:100%;}
+  /* sections */
+  .academia-grid{gap:3rem;}
+  .como-top{margin-bottom:3rem;}
+  .cta-big{font-size:clamp(4rem,18vw,7rem);}
+  .planos-grid{background:transparent;gap:1rem;}
+  .plano{border:1px solid #d8d8d8;}
+  .stats-grid2{gap:0;}
+  footer .ft-links{justify-content:center;}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">Bora<em>Lá</em></a>
+  <ul class="nav-links">
+    <li><a href="#como">Como funciona</a></li>
+    <li><a href="#planos">Planos</a></li>
+    <li><a href="#academia">Para academias</a></li>
+    <li><a href="app.html" class="nav-cta">Acessar app</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-convo">
+    <div class="hc-line"><span class="hc-text">Você trabalha de casa.</span></div>
+    <div class="hc-line"><span class="hc-text">Tem <span class="hi">liberdade de horário.</span></span></div>
+    <div class="hc-line"><span class="hc-text">Mas ainda chega na academia e <span class="hi">encontra tudo lotado.</span></span></div>
+    <div class="hc-line"><span class="hc-text">Dá raiva, né?</span></div>
+    <div class="hc-line answer"><span class="hc-text"><span class="hi-green">Bora Lá</span> resolve.<span class="hc-cursor" id="heroCursor"></span></span></div>
+  </div>
+  <div class="hero-footer">
+    <div class="hero-footer-left">
+      <span class="hf-label">Situação agora</span>
+      <span class="hf-live"><span class="hf-dot"></span>Academias parceiras transmitindo ao vivo</span>
+    </div>
+    <div class="hero-footer-right">
+      <a href="app.html" class="btn-main">Quero testar grátis</a>
+      <a href="#como" class="btn-ghost2">Como funciona <span class="arr">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <div class="ticker-item">Ocupação ao vivo <span class="tdot">●</span> Notificação inteligente <span class="tdot">●</span> Integração Wellhub <span class="tdot">●</span> Histórico de picos <span class="tdot">●</span> Multi-academia <span class="tdot">●</span> Zero fricção <span class="tdot">●</span> Bora Lá. <span class="tdot">●</span></div>
+    <div class="ticker-item">Ocupação ao vivo <span class="tdot">●</span> Notificação inteligente <span class="tdot">●</span> Integração Wellhub <span class="tdot">●</span> Histórico de picos <span class="tdot">●</span> Multi-academia <span class="tdot">●</span> Zero fricção <span class="tdot">●</span> Bora Lá. <span class="tdot">●</span></div>
+  </div>
+</div>
+
+<!-- PROVOCAÇÃO -->
+<section id="provoca">
+  <div>
+    <span class="provoca-tag reveal">O problema</span>
+    <h2 class="provoca-title reveal">Você tem<br>flexibilidade.<br><em>Tá usando ela?</em></h2>
+    <div class="provoca-cards">
+      <div class="pv-card reveal">
+        <span class="pv-emoji">😤</span>
+        <div class="pv-num">01</div>
+        <h3>Sai de casa sem saber</h3>
+        <p>Não tem como saber se vai estar cheio antes de ir. Você torceu. Perdeu tempo. Ficou frustrado.</p>
+      </div>
+      <div class="pv-card reveal">
+        <span class="pv-emoji">🚶</span>
+        <div class="pv-num">02</div>
+        <h3>Chegou. Estava lotado.</h3>
+        <p>Todos os equipamentos ocupados. Você esperou. Desistiu. Voltou pra casa sem treinar.</p>
+      </div>
+      <div class="pv-card reveal">
+        <span class="pv-emoji">📵</span>
+        <div class="pv-num">03</div>
+        <h3>Ligar pra academia?</h3>
+        <p>Sério? Ninguém tem tempo pra isso todo dia. E quando atendem, a informação já mudou.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MANIFESTO -->
+<section id="manifesto">
+  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text">Informação é poder.</span><span class="m-arrow">→</span></div>
+  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text">Tempo é o seu ativo.</span><span class="m-arrow">→</span></div>
+  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text">Rotina não espera.</span><span class="m-arrow">→</span></div>
+  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text" style="color:var(--green)">Bora Lá resolve.</span><span class="m-arrow" style="color:var(--green)">→</span></div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section id="como">
+  <div class="como-top reveal">
+    <h2 class="como-title">Como<br>funciona.</h2>
+    <p class="como-sub">Três passos. Você no controle de quando e onde treinar — sem fricção.</p>
+  </div>
+  <div class="steps-wrap">
+    <div class="step2 reveal"><span class="step-icon">📡</span><div class="step-circle">01</div><h3>Sensor na catraca</h3><p>Contagem automática de entrada e saída. Dados em tempo real, sem intervenção humana.</p></div>
+    <div class="step2 reveal"><span class="step-icon">📊</span><div class="step-circle">02</div><h3>App mostra ao vivo</h3><p>Veja a ocupação atual e o histórico de horários de todas as academias parceiras.</p></div>
+    <div class="step2 reveal"><span class="step-icon">🔔</span><div class="step-circle">03</div><h3>Você recebe o alerta</h3><p>Defina sua academia favorita e receba notificação quando atingir o nível ideal.</p></div>
+    <div class="step2 reveal"><span class="step-icon">💪</span><div class="step-circle">04</div><h3>Bora lá com certeza</h3><p>Você vai sabendo que vai ter espaço, equipamento livre e um treino sem estresse.</p></div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section id="planos">
+  <span class="pl-tag reveal">Planos</span>
+  <h2 class="pl-title reveal">Escolha<br>o seu.</h2>
+  <div class="planos-grid">
+    <div class="plano reveal">
+      <span class="plano-label">Gratuito forever</span>
+      <div class="plano-name2">Free</div>
+      <div class="plano-price2">R$ 0</div>
+      <div class="plano-desc2">Comece sem compromisso. Já vale muito.</div>
+      <ul class="plano-feats"><li>Ocupação ao vivo</li><li>Histórico de horários</li><li>Mapa de academias</li></ul>
+      <a href="app.html" class="plano-btn2">Começar grátis</a>
+    </div>
+    <div class="plano destaque reveal">
+      <span class="plano-label">Mais popular · Recomendado</span>
+      <div class="plano-name2">Premium</div>
+      <div class="plano-price2">R$ 19<small>,90/mês</small></div>
+      <div class="plano-desc2">Para quem leva a rotina a sério.</div>
+      <ul class="plano-feats"><li>Tudo do Free</li><li>Notificações personalizadas</li><li>Integração Wellhub</li><li>Relatório semanal</li><li>Multi-academia ilimitado</li></ul>
+      <a href="app.html" class="plano-btn2">Assinar agora</a>
+    </div>
+    <div class="plano reveal">
+      <span class="plano-label">Para negócios</span>
+      <div class="plano-name2">Academia</div>
+      <div class="plano-price2" style="font-size:1.8rem;line-height:1.2">Hardware<br>+ SaaS</div>
+      <div class="plano-desc2">Apareça para quem decide onde treinar.</div>
+      <ul class="plano-feats"><li>Sensor instalado</li><li>3 meses campanha grátis</li><li>Dashboard de fluxo</li><li>Anúncios segmentados</li></ul>
+      <a href="#academia" class="plano-btn2">Saiba mais</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="stats-grid2">
+    <div class="stat2 reveal"><div class="stat2-num" data-target="9.9" data-suffix="M">0</div><p>profissionais PJ ativos<br>no Brasil em 2024</p></div>
+    <div class="stat2 reveal"><div class="stat2-num" data-target="40" data-suffix="%">0</div><p>trabalham em modelo<br>híbrido ou full remote</p></div>
+    <div class="stat2 reveal"><div class="stat2-num" data-target="3" data-prefix="R$ " data-suffix="B">0</div><p>mercado de academias<br>no Brasil</p></div>
+  </div>
+</section>
+
+<!-- ACADEMIA -->
+<section id="academia">
+  <div class="academia-grid">
+    <div class="academia-left reveal-l">
+      <span class="sec-tag2">Para academias</span>
+      <h2 class="ac-big">Sua academia<br>cheia do<br>jeito certo.</h2>
+      <p>Não mais vazia às 14h e impossível às 18h. Distribua o fluxo, melhore a experiência e fidelize seus alunos com dados reais.</p>
+      <div class="academia-steps2">
+        <div class="as2"><div class="as2-num">1</div><div><h4>Você adquire o sensor</h4><p>Paga apenas o hardware. Instalação simples, sem obra, sem complicação.</p></div></div>
+        <div class="as2"><div class="as2-num">2</div><div><h4>3 meses de campanha grátis</h4><p>Sua academia aparece para usuários decidindo onde treinar agora.</p></div></div>
+        <div class="as2"><div class="as2-num">3</div><div><h4>Fluxo equilibrado</h4><p>Alunos chegam na hora certa. Você melhora a experiência e retém mais.</p></div></div>
+        <div class="as2"><div class="as2-num">4</div><div><h4>Dashboard + anúncios</h4><p>Dados de fluxo em tempo real e campanhas ativas para novos alunos.</p></div></div>
+      </div>
+    </div>
+    <div class="reveal-r">
+      <div class="ac-card">
+        <span class="tag3">Entrada sem risco</span>
+        <h3>Hardware<br>como âncora.<br>Serviço como<br>receita.</h3>
+        <p>Modelo pensado para eliminar a barreira de entrada. A academia vê valor antes de qualquer assinatura.</p>
+        <a href="mailto:academias@borala.app" class="btn-dark">Quero saber mais →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section id="cta-final">
+  <div class="cta-bg2"></div>
+  <span class="cta-pre reveal">Acesso antecipado · Grátis</span>
+  <h2 class="cta-big reveal">Bora<br><span class="g">Lá?</span></h2>
+  <p class="cta-sub2 reveal">Entre na lista. <strong>Os primeiros 500</strong> ganham Premium grátis por 3 meses.</p>
+  <div class="cta-form reveal">
+    <input class="cta-input" type="email" placeholder="seu@email.com"/>
+    <a href="#" class="btn-main" id="ctaBtn">Quero entrar →</a>
+  </div>
+  <p class="cta-disc reveal">Sem cartão de crédito · Sem spam · Cancele quando quiser</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-logo">Bora<span>Lá</span></div>
+  <small>© 2025 Bora Lá. Todos os direitos reservados.</small>
+  <div class="ft-links"><a href="#">Privacidade</a><a href="#">Termos</a><a href="mailto:oi@borala.app">Contato</a></div>
+</footer>
+
+<script>
+// ── HERO CONVERSATION ANIMATION
+(function(){
+  const lines = document.querySelectorAll('.hc-line');
+  lines.forEach(l => l.classList.add('visible'));
+  // show cursor after last line
+  const cursor = document.getElementById('heroCursor');
+  if(cursor){
+    setTimeout(()=> cursor.classList.add('show'), 3000);
+  }
+})();
+
+// ── CURSOR
+const cur=document.getElementById('cursor');
+const trail=document.getElementById('cursor-trail');
+let mx=0,my=0,tx=0,ty=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+});
+function animTrail(){
+  tx+=(mx-tx)*.13;ty+=(my-ty)*.13;
+  trail.style.left=tx+'px';trail.style.top=ty+'px';
+  requestAnimationFrame(animTrail);
+}animTrail();
+document.querySelectorAll('a,button,.pv-card,.step2,.plano,.m-line,.as2').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cur.classList.add('hov'));
+  el.addEventListener('mouseleave',()=>cur.classList.remove('hov'));
+});
+
+// ── NAV
+const navEl=document.getElementById('nav');
+window.addEventListener('scroll',()=>navEl.classList.toggle('scrolled',window.scrollY>60));
+
+// ── REVEAL
+const revEls=document.querySelectorAll('.reveal,.reveal-l,.reveal-r');
+const ro=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const p=e.target.parentElement;
+      const sibs=[...p.children].filter(c=>c.classList.contains('reveal')||c.classList.contains('reveal-l')||c.classList.contains('reveal-r'));
+      const idx=sibs.indexOf(e.target);
+      e.target.style.transitionDelay=(idx*0.1)+'s';
+      e.target.classList.add('on');
+      ro.unobserve(e.target);
+    }
+  });
+},{threshold:0.1});
+revEls.forEach(r=>ro.observe(r));
+
+// ── COUNTER
+const ctrs=document.querySelectorAll('[data-target]');
+const co=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const el=e.target;
+      const target=parseFloat(el.dataset.target);
+      const pre=el.dataset.prefix||'';
+      const suf=el.dataset.suffix||'';
+      const dec=target%1!==0;
+      let v=0;const dur=1800;const s=16;const inc=target/(dur/s);
+      const t=setInterval(()=>{
+        v+=inc;if(v>=target){v=target;clearInterval(t);}
+        el.textContent=pre+(dec?v.toFixed(1):Math.floor(v))+suf;
+      },s);
+      co.unobserve(el);
+    }
+  });
+},{threshold:0.5});
+ctrs.forEach(c=>co.observe(c));
+
+// ── TICKER
+const tt=document.querySelector('.ticker-track');
+tt.parentElement.addEventListener('mouseenter',()=>tt.style.animationPlayState='paused');
+tt.parentElement.addEventListener('mouseleave',()=>tt.style.animationPlayState='running');
+
+// ── MANIFESTO parallax
+document.querySelectorAll('.m-line').forEach(line=>{
+  line.addEventListener('mousemove',e=>{
+    const r=line.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    line.querySelector('.m-text').style.transform=`translateX(${x*14}px)`;
+  });
+  line.addEventListener('mouseleave',()=>{
+    line.querySelector('.m-text').style.transform='';
+  });
+});
+
+// ── HERO PARALLAX
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY;
+  const hl=document.querySelector('.hero-headline');
+  if(hl)hl.style.transform=`translateY(${y*.13}px)`;
+  const orb=document.querySelector('.hero-orb');
+  if(orb)orb.style.transform=`translate(${y*.04}px,${y*.07}px)`;
+},{ passive:true });
+
+// ── CTA FORM
+document.getElementById('ctaBtn').addEventListener('click',function(e){
+  e.preventDefault();
+  const inp=document.querySelector('.cta-input');
+  if(!inp.value||!inp.value.includes('@')){
+    inp.style.borderColor='var(--red)';
+    inp.style.animation='shake .4s ease';
+    inp.placeholder='Digite seu e-mail ↑';
+    setTimeout(()=>{inp.style.borderColor='';inp.style.animation='';inp.placeholder='seu@email.com';},2200);
+    return;
+  }
+  this.textContent='✓ Na lista!';
+  this.style.background='var(--green2)';
+  this.style.pointerEvents='none';
+  inp.style.borderColor='var(--green)';
+  inp.disabled=true;
+});
+</script>
+
+<style>
+@keyframes shake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-8px);}
+  40%{transform:translateX(8px);}
+  60%{transform:translateX(-5px);}
+  80%{transform:translateX(5px);}
+}
+</style>
+</body>
+</html>

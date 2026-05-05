@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Bora Lá — App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#080808;--white:#f2f2ee;--green:#1db954;--green2:#17a349;
+  --muted:#888;--border:#1e1e1e;--card:#111;--card2:#161616;
+  --red:#ff4444;--yellow:#f5a623;--panel-h:52px;
+}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;}
+
+/* ── AUTH ─────────────────────────────────── */
+#authScreen{
+  position:fixed;inset:0;z-index:1000;background:var(--black);
+  display:flex;align-items:center;justify-content:center;padding:1.5rem;
+  transition:opacity .4s,transform .4s;
+}
+#authScreen.hide{opacity:0;transform:translateY(-20px);pointer-events:none;}
+.auth-box{
+  width:100%;max-width:400px;background:var(--card);
+  border:1px solid var(--border);border-radius:16px;padding:2.5rem 2rem;
+  position:relative;overflow:hidden;
+}
+.auth-box::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(29,185,84,.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+.auth-logo{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:.04em;margin-bottom:.3rem;}
+.auth-logo span{color:var(--green);}
+.auth-tagline{font-size:.8rem;color:var(--muted);margin-bottom:2rem;}
+.auth-tabs{display:flex;margin-bottom:2rem;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.auth-tab{flex:1;padding:.65rem;text-align:center;font-size:.85rem;cursor:pointer;transition:background .2s,color .2s;color:var(--muted);background:transparent;border:none;font-family:'DM Sans',sans-serif;}
+.auth-tab.active{background:var(--green);color:var(--black);font-weight:500;}
+.auth-form{display:flex;flex-direction:column;gap:1rem;}
+.field{display:flex;flex-direction:column;gap:.4rem;}
+.field label{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+.field input{background:var(--black);border:1px solid var(--border);color:var(--white);padding:.8rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s;}
+.field input:focus{border-color:var(--green);}
+.field input::placeholder{color:#333;}
+.auth-btn{background:var(--green);color:var(--black);border:none;padding:.95rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s,transform .15s;margin-top:.5rem;}
+.auth-btn:hover{background:var(--green2);transform:translateY(-1px);}
+.auth-error{font-size:.82rem;color:var(--red);text-align:center;min-height:1.2rem;}
+
+/* ── APP LAYOUT ──────────────────────────── */
+#appScreen{display:none;height:100%;flex-direction:column;}
+#appScreen.show{display:flex;}
+
+/* TOPBAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.75rem 1.2rem;background:var(--black);
+  border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;
+  gap:.8rem;
+}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.04em;flex-shrink:0;}
+.topbar-logo span{color:var(--green);}
+
+/* CITY SEARCH in topbar */
+.city-search-wrap{
+  flex:1;max-width:320px;position:relative;
+}
+.city-search-wrap input{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  color:var(--white);padding:.5rem .9rem .5rem 2.1rem;
+  border-radius:2rem;font-family:'DM Sans',sans-serif;font-size:.82rem;
+  outline:none;transition:border-color .2s;
+}
+.city-search-wrap input:focus{border-color:var(--green);}
+.city-search-wrap input::placeholder{color:var(--muted);}
+.city-search-icon{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);font-size:.8rem;pointer-events:none;}
+.city-suggestions{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;z-index:200;
+  display:none;
+}
+.city-suggestions.open{display:block;}
+.city-sug-item{
+  padding:.65rem 1rem;font-size:.85rem;cursor:pointer;
+  transition:background .15s;border-bottom:1px solid var(--border);
+}
+.city-sug-item:last-child{border-bottom:none;}
+.city-sug-item:hover{background:var(--border);}
+.city-sug-item strong{color:var(--white);}
+.city-sug-item span{color:var(--muted);font-size:.75rem;}
+
+.topbar-right{display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
+.topbar-greeting{font-size:.8rem;color:var(--muted);}
+.topbar-greeting strong{color:var(--white);font-weight:500;}
+.logout-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.3rem .7rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;cursor:pointer;transition:all .2s;}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* MAIN */
+.app-main{flex:1;display:flex;overflow:hidden;}
+
+/* MAP */
+#map{flex:1;min-width:0;position:relative;}
+
+/* PANEL */
+.panel{
+  width:360px;flex-shrink:0;
+  background:var(--black);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+  position:relative;
+}
+
+/* PANEL HEADER */
+.panel-header{padding:.9rem 1rem .7rem;border-bottom:1px solid var(--border);flex-shrink:0;}
+.panel-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;}
+.panel-title{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+.panel-count{font-size:.72rem;color:var(--muted);}
+.panel-count strong{color:var(--white);}
+
+.gym-search-wrap{position:relative;margin-bottom:.6rem;}
+.gym-search-wrap input{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  color:var(--white);padding:.6rem .9rem .6rem 2.2rem;
+  border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;
+  outline:none;transition:border-color .2s;
+}
+.gym-search-wrap input:focus{border-color:var(--green);}
+.gym-search-wrap input::placeholder{color:#444;}
+.gym-search-icon{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:.82rem;pointer-events:none;color:var(--muted);}
+
+.filter-row{display:flex;gap:.35rem;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;}
+.filter-row::-webkit-scrollbar{display:none;}
+.filter-btn{
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+  padding:.28rem .75rem;border-radius:2rem;font-size:.72rem;cursor:pointer;
+  transition:all .2s;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;
+}
+.filter-btn.active,.filter-btn:hover{background:var(--green);border-color:var(--green);color:var(--black);}
+
+/* STATUS */
+.status-bar{
+  display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;
+  background:var(--card);border-bottom:1px solid var(--border);
+  font-size:.75rem;color:var(--muted);flex-shrink:0;
+}
+.status-dot{width:6px;height:6px;background:var(--green);border-radius:50%;flex-shrink:0;animation:pulse3 1.6s ease infinite;}
+@keyframes pulse3{0%,100%{box-shadow:0 0 0 0 rgba(29,185,84,.6);}50%{box-shadow:0 0 0 6px rgba(29,185,84,0);}}
+.status-bar strong{color:var(--white);}
+.status-time{margin-left:auto;font-size:.68rem;}
+
+/* GYM LIST */
+.gym-list{flex:1;overflow-y:auto;padding:.6rem;display:flex;flex-direction:column;gap:.5rem;}
+.gym-list::-webkit-scrollbar{width:3px;}
+.gym-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── GYM CARD — DESKTOP (full) ───────────── */
+.gym-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:.85rem 1rem;
+  cursor:pointer;transition:border-color .2s,background .2s,transform .15s;
+  position:relative;overflow:hidden;
+}
+.gym-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--green);transform:scaleY(0);transform-origin:bottom;
+  transition:transform .3s cubic-bezier(.16,1,.3,1);
+}
+.gym-card:hover::before,.gym-card.selected::before{transform:scaleY(1);}
+.gym-card:hover{border-color:#2a2a2a;background:var(--card2);}
+.gym-card.selected{border-color:var(--green);background:var(--card2);}
+
+.gc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.55rem;}
+.gc-name{font-size:.9rem;font-weight:500;line-height:1.25;flex:1;}
+.gc-dist{font-size:.7rem;color:var(--muted);white-space:nowrap;}
+
+.gc-bar-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;}
+.gc-bar{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.gc-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.16,1,.3,1);}
+.gc-pct{font-size:.8rem;font-weight:600;min-width:2.2rem;text-align:right;}
+
+.gc-bottom{display:flex;align-items:center;gap:.4rem;}
+.occ-badge{font-size:.65rem;font-weight:500;padding:.18rem .55rem;border-radius:2rem;letter-spacing:.03em;flex-shrink:0;}
+.badge-low{background:rgba(29,185,84,.15);color:var(--green);}
+.badge-mid{background:rgba(245,166,35,.15);color:var(--yellow);}
+.badge-high{background:rgba(255,68,68,.12);color:var(--red);}
+.gc-addr{font-size:.7rem;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gc-notif{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  padding:.18rem .55rem;border-radius:6px;font-size:.65rem;cursor:pointer;
+  transition:all .2s;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;
+}
+.gc-notif:hover,.gc-notif.active{border-color:var(--green);color:var(--green);background:rgba(29,185,84,.08);}
+
+/* ── GYM CARD MOBILE — compact snapshot ───── */
+/* Applied via JS when isMobile() */
+.gym-card.compact{
+  padding:.7rem .9rem;
+}
+.gym-card.compact .gc-bottom{display:none;}
+.gym-card.compact .gc-bar-row{margin-bottom:0;}
+
+/* Expand toggle button (mobile only) */
+.gc-expand{
+  display:none;
+  width:100%;margin-top:.6rem;
+  background:none;border:1px solid var(--border);
+  color:var(--muted);padding:.3rem;border-radius:6px;
+  font-size:.72rem;font-family:'DM Sans',sans-serif;
+  cursor:pointer;transition:all .2s;text-align:center;
+}
+.gc-expand:hover{border-color:var(--green);color:var(--green);}
+.gym-card.compact .gc-expand{display:block;}
+.gym-card.compact.expanded .gc-bottom{display:flex;}
+.gym-card.compact.expanded .gc-expand{color:var(--muted);}
+
+/* DETAIL PANEL */
+.detail-panel{
+  position:absolute;bottom:0;left:0;right:0;
+  background:var(--card);border-top:1px solid var(--border);
+  border-radius:12px 12px 0 0;
+  padding:1.2rem 1.2rem .8rem;
+  transform:translateY(100%);
+  transition:transform .4s cubic-bezier(.16,1,.3,1);
+  z-index:200;max-height:88%;overflow-y:auto;
+  box-shadow:0 -8px 32px rgba(0,0,0,.7);
+}
+.detail-panel.open{transform:translateY(0);}
+.detail-panel::-webkit-scrollbar{width:3px;}
+.detail-panel::-webkit-scrollbar-thumb{background:var(--border);}
+
+/* drag handle */
+.detail-handle{
+  width:36px;height:4px;background:var(--border);border-radius:2px;
+  margin:0 auto .9rem;
+}
+.detail-close{
+  position:absolute;top:.8rem;right:.8rem;
+  background:var(--border);border:none;color:var(--muted);
+  width:26px;height:26px;border-radius:50%;cursor:pointer;
+  font-size:.85rem;display:flex;align-items:center;justify-content:center;
+  transition:background .2s;
+}
+.detail-close:hover{background:#333;color:var(--white);}
+.detail-name{font-size:1rem;font-weight:600;margin-bottom:.2rem;padding-right:2rem;line-height:1.3;}
+.detail-addr{font-size:.78rem;color:var(--muted);margin-bottom:1rem;}
+
+.detail-occ-big{
+  display:flex;align-items:center;gap:.9rem;
+  background:var(--card2);border-radius:10px;
+  padding:.9rem 1rem;margin-bottom:1rem;
+}
+.occ-number{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;line-height:1;}
+.occ-info{display:flex;flex-direction:column;gap:.15rem;}
+.occ-info span:first-child{font-size:.75rem;color:var(--muted);}
+.occ-info strong{font-size:.9rem;}
+.occ-info small{font-size:.68rem;color:var(--muted);}
+
+.chart-title{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;}
+.hour-chart{display:flex;align-items:flex-end;gap:2px;height:52px;margin-bottom:.5rem;}
+.hour-bar{flex:1;border-radius:2px 2px 0 0;min-height:3px;position:relative;cursor:default;transition:opacity .2s;}
+.hour-bar.current{outline:2px solid var(--green);outline-offset:1px;}
+.hour-bar:hover{opacity:.8;}
+.hour-bar:hover .hour-tip{display:block;}
+.hour-tip{display:none;position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:#222;color:var(--white);font-size:.62rem;padding:.18rem .38rem;border-radius:4px;white-space:nowrap;z-index:5;pointer-events:none;}
+.hour-labels{display:flex;justify-content:space-between;font-size:.62rem;color:var(--muted);margin-bottom:1rem;}
+
+.detail-actions{display:flex;gap:.5rem;}
+.detail-btn{flex:1;padding:.7rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;text-align:center;border:none;}
+.detail-btn-primary{background:var(--green);color:var(--black);}
+.detail-btn-primary:hover{background:var(--green2);}
+.detail-btn-secondary{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
+.detail-btn-secondary:hover{border-color:var(--green);color:var(--green);}
+.detail-btn-secondary.active{border-color:var(--green);color:var(--green);background:rgba(29,185,84,.08);}
+
+/* LOCATION OVERLAY */
+.loc-overlay{
+  position:absolute;inset:0;background:rgba(8,8,8,.92);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1rem;padding:2rem;text-align:center;z-index:20;
+  backdrop-filter:blur(4px);
+}
+.loc-overlay.hide{display:none;}
+.loc-icon{font-size:2.5rem;}
+.loc-overlay h3{font-size:1.1rem;font-weight:500;}
+.loc-overlay p{font-size:.85rem;color:var(--muted);max-width:260px;line-height:1.6;}
+.loc-btn{background:var(--green);color:var(--black);border:none;padding:.85rem 2rem;border-radius:2rem;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .2s;}
+.loc-btn:hover{background:var(--green2);}
+.loc-btn-ghost{background:none;border:1px solid var(--border);color:var(--muted);padding:.7rem 1.5rem;border-radius:2rem;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s;}
+.loc-btn-ghost:hover{border-color:var(--muted);color:var(--white);}
+
+/* LOADING / EMPTY */
+.gym-loading,.gym-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;padding:2.5rem 1rem;text-align:center;color:var(--muted);font-size:.88rem;}
+.spinner{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--green);animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:var(--white);padding:.65rem 1.3rem;border-radius:2rem;font-size:.82rem;border:1px solid var(--border);opacity:0;transition:opacity .3s,transform .3s;z-index:9999;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* LEAFLET */
+.leaflet-popup-content-wrapper{background:var(--card);color:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.6);}
+.leaflet-popup-tip{background:var(--card);}
+.leaflet-popup-content{margin:9px 13px;font-family:'DM Sans',sans-serif;font-size:.83rem;}
+.popup-name{font-weight:500;margin-bottom:.25rem;}
+.popup-occ{display:flex;align-items:center;gap:.4rem;}
+.popup-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.gym-marker{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:600;font-family:'DM Sans',sans-serif;border:2px solid rgba(255,255,255,.12);box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;transition:transform .2s;}
+.gym-marker:hover{transform:scale(1.18);}
+
+/* ── MOBILE LAYOUT ───────────────────────── */
+@media(max-width:768px){
+  /* topbar: city search takes full width on 2nd row */
+  .topbar{flex-wrap:wrap;padding:.65rem 1rem;}
+  .topbar-logo{font-size:1.4rem;}
+  .city-search-wrap{order:3;flex:0 0 100%;max-width:100%;margin-top:.4rem;}
+  .topbar-right{margin-left:auto;}
+  .topbar-greeting{display:none;}
+
+  /* layout: map on top (fixed 35% height), panel takes rest */
+  .app-main{flex-direction:column;overflow:visible;}
+  #map{
+    flex:0 0 38vh;
+    min-height:160px;
+    max-height:38vh;
+  }
+
+  /* panel is the main content area — scrollable list */
+  .panel{
+    width:100%;
+    flex:1;
+    min-height:0;
+    border-left:none;border-top:1px solid var(--border);
+    overflow:hidden;
+    /* no fixed height — fills remaining space naturally */
+    height:auto;
+  }
+
+  /* sheet drag handle */
+  .panel-header::before{
+    content:'';display:block;
+    width:36px;height:4px;background:var(--border);border-radius:2px;
+    margin:0 auto .6rem;cursor:grab;
+  }
+
+  /* hide gym address in compact cards — only name + bar + badge */
+  .gym-card.compact .gc-addr{display:none;}
+
+  /* detail panel slides up over the panel */
+  .detail-panel{max-height:92%;}
+
+  /* status time hidden on mobile */
+  .status-time{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- ══ AUTH ═════════════════════════════════ -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">Bora<span>Lá</span></div>
+    <p class="auth-tagline">Academia ao vivo, sempre.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Entrar</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Criar conta</button>
+    </div>
+    <div id="formLogin" class="auth-form">
+      <div class="field"><label>E-mail</label><input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email"/></div>
+      <div class="field"><label>Senha</label><input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"/></div>
+      <p class="auth-error" id="loginError"></p>
+      <button class="auth-btn" onclick="doLogin()">Entrar →</button>
+      <p style="text-align:center;font-size:.78rem;color:var(--muted);margin-top:.5rem;">Não tem conta? <span style="color:var(--green);cursor:pointer" onclick="switchTab('register')">Crie grátis</span></p>
+    </div>
+    <div id="formRegister" class="auth-form" style="display:none">
+      <div class="field"><label>Nome</label><input type="text" id="regName" placeholder="Seu nome"/></div>
+      <div class="field"><label>E-mail</label><input type="email" id="regEmail" placeholder="seu@email.com" autocomplete="email"/></div>
+      <div class="field"><label>Senha</label><input type="password" id="regPass" placeholder="Mínimo 6 caracteres" autocomplete="new-password"/></div>
+      <p class="auth-error" id="regError"></p>
+      <button class="auth-btn" onclick="doRegister()">Criar conta grátis →</button>
+      <p style="text-align:center;font-size:.78rem;color:var(--muted);margin-top:.5rem;">Já tem conta? <span style="color:var(--green);cursor:pointer" onclick="switchTab('login')">Entre aqui</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ═══════════════════════════════════ -->
+<div id="appScreen">
+
+  <div class="topbar">
+    <div class="topbar-logo">Bora<span>Lá</span></div>
+
+    <!-- CITY SEARCH -->
+    <div class="city-search-wrap">
+      <span class="city-search-icon">🏙</span>
+      <input type="text" id="cityInput" placeholder="Buscar por cidade ou bairro..." autocomplete="off"
+        oninput="onCityInput()" onkeydown="onCityKey(event)"/>
+      <div class="city-suggestions" id="citySuggestions"></div>
+    </div>
+
+    <div class="topbar-right">
+      <span class="topbar-greeting">Olá, <strong id="greetName">—</strong></span>
+      <button class="logout-btn" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-main">
+
+    <!-- MAP -->
+    <div id="map">
+      <div class="loc-overlay" id="locOverlay">
+        <div class="loc-icon">📍</div>
+        <h3>Onde você está?</h3>
+        <p>Usamos sua localização para mostrar as academias mais próximas em tempo real.</p>
+        <button class="loc-btn" onclick="requestLocation()">Usar minha localização</button>
+        <button class="loc-btn-ghost" onclick="fallbackLocation()">Usar São Paulo</button>
+      </div>
+    </div>
+
+    <!-- PANEL -->
+    <div class="panel" id="panel">
+      <!-- detail drawer -->
+      <div class="detail-panel" id="detailPanel">
+        <div class="detail-handle"></div>
+        <button class="detail-close" onclick="closeDetail()">✕</button>
+        <div id="detailContent"></div>
+      </div>
+
+      <div class="panel-header" id="panelHeader">
+        <div class="panel-title-row">
+          <span class="panel-title">Academias próximas</span>
+          <span class="panel-count"><strong id="gymCount">—</strong> encontradas</span>
+        </div>
+        <div class="gym-search-wrap">
+          <span class="gym-search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Nome da academia..." oninput="filterGyms()"/>
+        </div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setFilter(this,'all')">Todas</button>
+          <button class="filter-btn" onclick="setFilter(this,'low')">🟢 Vazias</button>
+          <button class="filter-btn" onclick="setFilter(this,'mid')">🟡 Moderadas</button>
+          <button class="filter-btn" onclick="setFilter(this,'high')">🔴 Cheias</button>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <span class="status-dot"></span>
+        <span><strong id="statusCity">—</strong></span>
+        <span class="status-time" id="statusTime">—</span>
+      </div>
+
+      <div class="gym-list" id="gymList">
+        <div class="gym-loading"><div class="spinner"></div><span>Aguardando localização...</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+const isMobile = () => window.innerWidth <= 768;
+
+function haversine(lat1,lng1,lat2,lng2){
+  const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function formatDist(m){ return m<1000?Math.round(m)+'m':(m/1000).toFixed(1)+'km'; }
+function occColor(p){ return p<40?'#1db954':p<70?'#f5a623':'#ff4444'; }
+function occLabel(p){
+  if(p<40) return {text:'Tranquila',cls:'badge-low'};
+  if(p<70) return {text:'Moderada', cls:'badge-mid'};
+  return           {text:'Lotada',   cls:'badge-high'};
+}
+
+let toastTimer;
+function showToast(msg,dur=3000){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ══════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════
+const DB={
+  getUsers(){ return JSON.parse(localStorage.getItem('bl_users')||'[]'); },
+  saveUsers(u){ localStorage.setItem('bl_users',JSON.stringify(u)); },
+  getSession(){ return JSON.parse(localStorage.getItem('bl_session')||'null'); },
+  saveSession(s){ localStorage.setItem('bl_session',JSON.stringify(s)); },
+  clearSession(){ localStorage.removeItem('bl_session'); },
+  getNotifs(){ return JSON.parse(localStorage.getItem('bl_notifs')||'[]'); },
+  saveNotifs(n){ localStorage.setItem('bl_notifs',JSON.stringify(n)); },
+};
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+function switchTab(tab){
+  document.getElementById('tabLogin').classList.toggle('active',tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active',tab==='register');
+  document.getElementById('formLogin').style.display=tab==='login'?'flex':'none';
+  document.getElementById('formRegister').style.display=tab==='register'?'flex':'none';
+}
+function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginError');
+  if(!email||!pass){err.textContent='Preencha todos os campos.';return;}
+  const user=DB.getUsers().find(u=>u.email===email&&u.pass===btoa(pass));
+  if(!user){err.textContent='E-mail ou senha incorretos.';return;}
+  err.textContent='';
+  DB.saveSession({email:user.email,name:user.name});
+  startApp(user.name);
+}
+function doRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('regPass').value;
+  const err=document.getElementById('regError');
+  if(!name||!email||!pass){err.textContent='Preencha todos os campos.';return;}
+  if(pass.length<6){err.textContent='Senha mínima: 6 caracteres.';return;}
+  if(!/\S+@\S+\.\S+/.test(email)){err.textContent='E-mail inválido.';return;}
+  const users=DB.getUsers();
+  if(users.find(u=>u.email===email)){err.textContent='E-mail já cadastrado.';return;}
+  users.push({name,email,pass:btoa(pass),createdAt:Date.now()});
+  DB.saveUsers(users);
+  DB.saveSession({email,name});
+  startApp(name);
+}
+function doLogout(){
+  DB.clearSession();
+  document.getElementById('appScreen').classList.remove('show');
+  document.getElementById('authScreen').classList.remove('hide');
+  document.getElementById('gymList').innerHTML='<div class="gym-loading"><div class="spinner"></div><span>Aguardando localização...</span></div>';
+  if(map){map.remove();map=null;}
+  gyms=[];markers={};selectedGym=null;
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  const sess=DB.getSession();
+  if(sess) startApp(sess.name);
+  document.querySelectorAll('#formLogin input,#formRegister input').forEach(inp=>{
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter') inp.closest('.auth-form').querySelector('.auth-btn').click();});
+  });
+});
+
+// ══════════════════════════════════════════
+// APP START
+// ══════════════════════════════════════════
+function startApp(name){
+  document.getElementById('authScreen').classList.add('hide');
+  document.getElementById('appScreen').classList.add('show');
+  document.getElementById('greetName').textContent=name.split(' ')[0];
+  updateClock();
+  setInterval(updateClock,30000);
+  initMap();
+  setTimeout(()=>{
+    map.invalidateSize();
+    if(isMobile()) setupSheetDrag();
+    navigator.geolocation?.getCurrentPosition(
+      pos=>{
+        userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+        document.getElementById('locOverlay').classList.add('hide');
+        map.setView([userLat,userLng],14);
+        L.circleMarker([userLat,userLng],{radius:8,color:'#1db954',fillColor:'#1db954',fillOpacity:1,weight:3}).addTo(map).bindPopup('<b>Você está aqui</b>');
+        L.circle([userLat,userLng],{radius:pos.coords.accuracy,color:'#1db954',fillColor:'#1db954',fillOpacity:.05,weight:1}).addTo(map);
+        fetchGyms(userLat,userLng);
+      },
+      err=>{
+        console.warn('Geolocation:',err.message);
+        document.getElementById('locOverlay').classList.remove('hide');
+        if(err.code===1) document.querySelector('.loc-overlay p').textContent='Permissão negada. Escolha uma opção abaixo.';
+      },
+      {timeout:12000,enableHighAccuracy:true,maximumAge:60000}
+    );
+  },300);
+}
+function updateClock(){
+  document.getElementById('statusTime').textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · ao vivo';
+}
+
+// ══════════════════════════════════════════
+// MOBILE BOTTOM SHEET DRAG
+// ══════════════════════════════════════════
+function setupSheetDrag(){
+  // Map/panel split is now fixed (38vh map / rest panel).
+  // Keep function as no-op for compatibility.
+}
+
+// ══════════════════════════════════════════
+// CITY SEARCH (Nominatim)
+// ══════════════════════════════════════════
+let cityTimer;
+async function onCityInput(){
+  const q=document.getElementById('cityInput').value.trim();
+  const box=document.getElementById('citySuggestions');
+  clearTimeout(cityTimer);
+  if(q.length<3){box.classList.remove('open');box.innerHTML='';return;}
+  cityTimer=setTimeout(async()=>{
+    try{
+      const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+', Brasil')}&format=json&limit=5&addressdetails=1`,
+        {headers:{'Accept-Language':'pt-BR'}});
+      const data=await res.json();
+      if(!data.length){box.classList.remove('open');return;}
+      box.innerHTML=data.map((d,i)=>{
+        const city=d.address?.city||d.address?.town||d.address?.municipality||d.display_name.split(',')[0];
+        const state=d.address?.state||'';
+        return `<div class="city-sug-item" onclick="selectCity(${d.lat},${d.lon},'${(city+', '+state).replace(/'/g,"\\'")}')">
+          <strong>${city}</strong> <span>${state}</span>
+        </div>`;
+      }).join('');
+      box.classList.add('open');
+    }catch(e){console.warn('Nominatim:',e);}
+  },350);
+}
+function onCityKey(e){
+  if(e.key==='Escape') document.getElementById('citySuggestions').classList.remove('open');
+}
+function selectCity(lat,lng,label){
+  userLat=parseFloat(lat); userLng=parseFloat(lng);
+  document.getElementById('cityInput').value=label;
+  document.getElementById('citySuggestions').classList.remove('open');
+  document.getElementById('locOverlay').classList.add('hide');
+  map.setView([userLat,userLng],14);
+  // clear old markers
+  Object.values(markers).forEach(m=>m.remove()); markers={};
+  gyms=[]; selectedGym=null;
+  closeDetail();
+  fetchGyms(userLat,userLng);
+  showToast('📍 Buscando academias em '+label.split(',')[0]);
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.city-search-wrap'))
+    document.getElementById('citySuggestions').classList.remove('open');
+});
+
+// ══════════════════════════════════════════
+// OCCUPANCY ENGINE
+// ══════════════════════════════════════════
+function getOccupancy(id,seed){
+  const now=new Date(),h=now.getHours(),m=now.getMinutes(),dow=now.getDay();
+  const curves={
+    0:[5,5,5,5,5,5,10,25,40,35,30,25,20,18,20,25,30,25,15,10,8,6,5,5],
+    1:[5,5,5,5,5,8,25,55,45,30,35,40,35,30,40,45,75,80,60,35,20,12,8,5],
+    2:[5,5,5,5,5,8,22,50,40,28,32,38,32,28,38,42,72,78,58,32,18,10,7,5],
+    3:[5,5,5,5,5,8,22,50,40,28,32,38,32,28,38,42,70,78,58,32,18,10,7,5],
+    4:[5,5,5,5,5,8,25,55,45,30,35,40,35,30,40,45,75,80,60,35,20,12,8,5],
+    5:[5,5,5,5,5,8,20,45,38,28,30,35,30,28,35,40,65,60,45,30,20,15,10,7],
+    6:[5,5,5,5,5,5,12,40,55,50,45,38,30,25,22,20,25,22,18,12,8,6,5,5],
+  };
+  const base=curves[dow][h],next=curves[dow][(h+1)%24];
+  const interp=base+(next-base)*(m/60);
+  const r=(Math.sin(seed*9301+49297)*0.5+0.5);
+  const vary=(r-0.5)*18;
+  const live=Math.sin(Date.now()/8000+seed)*4;
+  return Math.min(100,Math.max(0,Math.round(interp+vary+live)));
+}
+
+// ══════════════════════════════════════════
+// MAP & GYMS
+// ══════════════════════════════════════════
+let map=null,gyms=[],markers={},selectedGym=null,currentFilter='all',userLat,userLng;
+
+function initMap(){
+  if(map) return;
+  map=L.map('map',{center:[-23.55,-46.63],zoom:13,zoomControl:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+}
+
+function requestLocation(){
+  map.invalidateSize();
+  navigator.geolocation?.getCurrentPosition(
+    pos=>{
+      userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+      document.getElementById('locOverlay').classList.add('hide');
+      map.setView([userLat,userLng],14);
+      L.circleMarker([userLat,userLng],{radius:8,color:'#1db954',fillColor:'#1db954',fillOpacity:1,weight:3}).addTo(map);
+      fetchGyms(userLat,userLng);
+    },
+    ()=>showToast('Não foi possível obter localização.'),
+    {timeout:12000,enableHighAccuracy:true}
+  );
+}
+
+function fallbackLocation(){
+  userLat=-23.5642; userLng=-46.6527;
+  document.getElementById('locOverlay').classList.add('hide');
+  map.setView([userLat,userLng],14);
+  fetchGyms(userLat,userLng);
+  showToast('📍 Usando São Paulo como referência');
+}
+
+async function fetchGyms(lat,lng){
+  document.getElementById('gymList').innerHTML=`<div class="gym-loading"><div class="spinner"></div><span>Buscando academias reais...</span></div>`;
+  document.getElementById('statusCity').textContent='Buscando...';
+
+  const r=2000;
+  const q=`[out:json][timeout:25];(node["leisure"="fitness_centre"](around:${r},${lat},${lng});way["leisure"="fitness_centre"](around:${r},${lat},${lng});node["sport"="fitness"](around:${r},${lat},${lng});node["amenity"="gym"](around:${r},${lat},${lng}););out center 40;`;
+
+  // When running from file://, direct requests to Overpass are blocked by CORS.
+  // Strategy: try corsproxy.io first (most reliable for file://), then allorigins, then direct endpoints.
+  const encoded = encodeURIComponent(q);
+  const endpoints=[
+    // 1. corsproxy.io — wraps the POST, works from file://
+    async () => {
+      const res = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://overpass-api.de/api/interpreter')}`, {
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:'data='+encoded,
+      });
+      return res.json();
+    },
+    // 2. allorigins proxy (GET)
+    async () => {
+      const url = `https://api.allorigins.win/get?url=${encodeURIComponent('https://overpass-api.de/api/interpreter?data='+encoded)}`;
+      const res = await fetch(url);
+      const d = await res.json();
+      return JSON.parse(d.contents);
+    },
+    // 3. thingproxy
+    async () => {
+      const res = await fetch('https://thingproxy.freeboard.io/fetch/https://overpass-api.de/api/interpreter', {
+        method:'POST',
+        body:'data='+encoded,
+      });
+      return res.json();
+    },
+    // 4. Direct GET (works if served from http://)
+    async () => {
+      const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encoded}`);
+      return res.json();
+    },
+    // 5. Mirror direct
+    async () => {
+      const res = await fetch(`https://overpass.kumi.systems/api/interpreter?data=${encoded}`);
+      return res.json();
+    },
+  ];
+
+  for(let i=0;i<endpoints.length;i++){
+    try{
+      console.log(`Tentando endpoint ${i+1}...`);
+      const data = await Promise.race([
+        endpoints[i](),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
+      ]);
+      if(data && data.elements){
+        console.log(`Endpoint ${i+1} funcionou! ${data.elements.length} resultados.`);
+        processGyms(data.elements,lat,lng);
+        return;
+      }
+    }catch(e){
+      console.warn(`Endpoint ${i+1} falhou:`,e.message);
+    }
+  }
+  // All failed — use realistic simulated data
+  console.warn('Todos os endpoints falharam. Usando dados simulados.');
+  showToast('Usando academias simuladas (abra via servidor para dados reais).');
+  useFallbackGyms(lat,lng);
+}
+
+function processGyms(elements,lat,lng){
+  if(!elements||!elements.length){useFallbackGyms(lat,lng);return;}
+  gyms=elements.map((el,i)=>{
+    const eLat=el.lat||el.center?.lat, eLng=el.lon||el.center?.lon;
+    if(!eLat||!eLng) return null;
+    const name=el.tags?.name||el.tags?.['name:pt']||`Academia ${i+1}`;
+    const addr=[el.tags?.['addr:street'],el.tags?.['addr:housenumber']].filter(Boolean).join(', ')||'Endereço não disponível';
+    const dist=haversine(lat,lng,eLat,eLng);
+    const seed=el.id||i;
+    return{id:el.id||i,name,addr,lat:eLat,lng:eLng,dist,seed,occ:getOccupancy(el.id,seed)};
+  }).filter(Boolean).sort((a,b)=>a.dist-b.dist);
+  finishLoad(lat,lng);
+}
+
+function useFallbackGyms(lat,lng){
+  // Generate realistic academies around the ACTUAL user location
+  const names=[
+    'Academia FitPrime','Smart Fit','Bio Ritmo','Bodytech',
+    'Arena Fitness','Power House Gym','Academia Total','CrossFit Local',
+    'Studio Fitness','Academia Saúde & Vida',
+  ];
+  // Random but deterministic offsets based on lat/lng seed
+  gyms=names.map((name,i)=>{
+    const ang=(i/names.length)*2*Math.PI + lat;
+    const dist=200+((i*317+lat*1000)%1800); // 200m to 2km
+    const dLat=(dist/111320)*Math.cos(ang);
+    const dLng=(dist/(111320*Math.cos(lat*Math.PI/180)))*Math.sin(ang);
+    return{
+      id:i+1000,name,
+      addr:`Próximo a você · ${Math.round(dist)}m`,
+      lat:lat+dLat,lng:lng+dLng,
+      dist:haversine(lat,lng,lat+dLat,lng+dLng),
+      seed:i+99,occ:getOccupancy(i+1000,i+99),
+    };
+  }).sort((a,b)=>a.dist-b.dist);
+  finishLoad(lat,lng);
+}
+
+function finishLoad(lat,lng){
+  document.getElementById('gymCount').textContent=gyms.length;
+  // Try to get city name for status
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,{headers:{'Accept-Language':'pt-BR'}})
+    .then(r=>r.json())
+    .then(d=>{
+      const city=d.address?.city||d.address?.town||d.address?.suburb||'sua região';
+      document.getElementById('statusCity').textContent=gyms.length+' academias em '+city;
+    }).catch(()=>{
+      document.getElementById('statusCity').textContent=gyms.length+' academias encontradas';
+    });
+  renderList();
+  renderMarkers();
+  // Live update every 30s
+  clearInterval(window._liveTimer);
+  window._liveTimer=setInterval(()=>{
+    gyms.forEach(g=>g.occ=getOccupancy(g.id,g.seed));
+    renderList();updateMarkers();
+    if(selectedGym) renderDetail(selectedGym);
+  },30000);
+}
+
+// ══════════════════════════════════════════
+// RENDER LIST
+// ══════════════════════════════════════════
+let searchQuery='';
+function filterGyms(){searchQuery=document.getElementById('searchInput').value;renderList();}
+function setFilter(btn,f){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); currentFilter=f; renderList();
+}
+
+function renderList(){
+  const mobile=isMobile();
+  const notifs=DB.getNotifs();
+  const list=document.getElementById('gymList');
+  const q=searchQuery.toLowerCase();
+
+  const filtered=gyms.filter(g=>{
+    const match=g.name.toLowerCase().includes(q)||g.addr.toLowerCase().includes(q);
+    if(!match) return false;
+    if(currentFilter==='low') return g.occ<40;
+    if(currentFilter==='mid') return g.occ>=40&&g.occ<70;
+    if(currentFilter==='high') return g.occ>=70;
+    return true;
+  });
+
+  if(!filtered.length){
+    list.innerHTML='<div class="gym-empty"><span style="font-size:1.4rem">🏋️</span><span>Nenhuma academia encontrada.</span></div>';
+    return;
+  }
+
+  list.innerHTML=filtered.map(g=>{
+    const c=occColor(g.occ), lb=occLabel(g.occ);
+    const notif=notifs.includes(String(g.id));
+    const sel=selectedGym?.id===g.id;
+    // mobile: compact card; desktop: full card
+    return `
+    <div class="gym-card${mobile?' compact':''} ${sel?'selected':''}" id="card-${g.id}" onclick="selectGym(${g.id})">
+      <div class="gc-top">
+        <span class="gc-name">${g.name}</span>
+        <span class="gc-dist">${formatDist(g.dist)}</span>
+      </div>
+      <div class="gc-bar-row">
+        <div class="gc-bar"><div class="gc-fill" style="width:${g.occ}%;background:${c}"></div></div>
+        <span class="gc-pct" style="color:${c}">${g.occ}%</span>
+        <span class="occ-badge ${lb.cls}">${lb.text}</span>
+      </div>
+      <div class="gc-bottom">
+        <span class="gc-addr">${g.addr}</span>
+        <button class="gc-notif ${notif?'active':''}" onclick="event.stopPropagation();toggleNotif(${g.id},this)">
+          ${notif?'🔔 Ativo':'🔕 Avisar'}
+        </button>
+      </div>
+      ${mobile?`<button class="gc-expand" onclick="event.stopPropagation();toggleExpand(this)">Ver mais ↓</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+// Mobile expand/collapse card
+function toggleExpand(btn){
+  const card=btn.closest('.gym-card');
+  const exp=card.classList.toggle('expanded');
+  btn.textContent=exp?'Ver menos ↑':'Ver mais ↓';
+}
+
+// ══════════════════════════════════════════
+// MARKERS
+// ══════════════════════════════════════════
+function renderMarkers(){
+  gyms.forEach(g=>{
+    const c=occColor(g.occ);
+    const icon=L.divIcon({className:'',html:`<div class="gym-marker" style="background:${c};color:${g.occ<70?'#000':'#fff'}">${g.occ}%</div>`,iconSize:[34,34],iconAnchor:[17,17]});
+    const m=L.marker([g.lat,g.lng],{icon}).addTo(map);
+    m.bindPopup(`<div class="popup-name">${g.name}</div><div class="popup-occ"><div class="popup-dot" style="background:${c}"></div><span style="color:${c};font-weight:500">${g.occ}% ocupado</span></div><div style="font-size:.72rem;color:#888;margin-top:.2rem">${g.addr}</div>`);
+    m.on('click',()=>selectGym(g.id));
+    markers[g.id]=m;
+  });
+}
+function updateMarkers(){
+  gyms.forEach(g=>{
+    if(!markers[g.id]) return;
+    const c=occColor(g.occ);
+    markers[g.id].setIcon(L.divIcon({className:'',html:`<div class="gym-marker" style="background:${c};color:${g.occ<70?'#000':'#fff'}">${g.occ}%</div>`,iconSize:[34,34],iconAnchor:[17,17]}));
+  });
+}
+
+// ══════════════════════════════════════════
+// SELECT & DETAIL
+// ══════════════════════════════════════════
+function selectGym(id){
+  const g=gyms.find(x=>x.id==id);
+  if(!g) return;
+  selectedGym=g;
+  renderList();
+  map.panTo([g.lat,g.lng],{animate:true,duration:.5});
+  markers[id]?.openPopup();
+  renderDetail(g);
+  document.getElementById('detailPanel').classList.add('open');
+  // on mobile, scroll panel into view
+  if(isMobile()){
+    document.getElementById('panel').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  // scroll card into view
+  setTimeout(()=>document.getElementById('card-'+id)?.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+function closeDetail(){
+  document.getElementById('detailPanel').classList.remove('open');
+  selectedGym=null;
+  renderList();
+}
+
+function renderDetail(g){
+  const c=occColor(g.occ), lb=occLabel(g.occ);
+  const notifs=DB.getNotifs(), isN=notifs.includes(String(g.id));
+  const now=new Date(), dow=now.getDay(), h=now.getHours();
+  const curves={0:[5,5,5,5,5,5,10,25,40,35,30,25,20,18,20,25,30,25,15,10,8,6,5,5],1:[5,5,5,5,5,8,25,55,45,30,35,40,35,30,40,45,75,80,60,35,20,12,8,5],2:[5,5,5,5,5,8,22,50,40,28,32,38,32,28,38,42,72,78,58,32,18,10,7,5],3:[5,5,5,5,5,8,22,50,40,28,32,38,32,28,38,42,70,78,58,32,18,10,7,5],4:[5,5,5,5,5,8,25,55,45,30,35,40,35,30,40,45,75,80,60,35,20,12,8,5],5:[5,5,5,5,5,8,20,45,38,28,30,35,30,28,35,40,65,60,45,30,20,15,10,7],6:[5,5,5,5,5,5,12,40,55,50,45,38,30,25,22,20,25,22,18,12,8,6,5,5]};
+  const r=(Math.sin(g.seed*9301+49297)*.5+.5);
+  const bars=curves[dow].map((v,i)=>{
+    const val=Math.min(100,Math.max(0,Math.round(v+(r-.5)*14)));
+    const bc=occColor(val);
+    return `<div class="hour-bar${i===h?' current':''}" style="height:${val}%;background:${bc};opacity:${i===h?1:.5}"><div class="hour-tip">${String(i).padStart(2,'0')}h · ${val}%</div></div>`;
+  }).join('');
+
+  document.getElementById('detailContent').innerHTML=`
+    <div class="detail-name">${g.name}</div>
+    <div class="detail-addr">📍 ${g.addr} · ${formatDist(g.dist)}</div>
+    <div class="detail-occ-big">
+      <div class="occ-number" style="color:${c}">${g.occ}%</div>
+      <div class="occ-info">
+        <span>Ocupação agora</span>
+        <strong style="color:${c}">${lb.text}</strong>
+        <small>Atualizado ao vivo</small>
+      </div>
+    </div>
+    <div class="chart-title">Histórico de hoje</div>
+    <div class="hour-chart">${bars}</div>
+    <div class="hour-labels"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div>
+    <div class="detail-actions">
+      <button class="detail-btn detail-btn-primary" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${g.lat},${g.lng}','_blank')">🗺 Como chegar</button>
+      <button class="detail-btn detail-btn-secondary${isN?' active':''}" id="detailNotifBtn" onclick="toggleNotif(${g.id},this)">
+        ${isN?'🔔 Notificação ativa':'🔕 Me avisar'}
+      </button>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════
+function toggleNotif(gymId,btn){
+  let notifs=DB.getNotifs(); const id=String(gymId);
+  const gym=gyms.find(g=>g.id==gymId);
+  if(notifs.includes(id)){
+    notifs=notifs.filter(n=>n!==id);
+    showToast(`Notificação removida — ${gym?.name||'academia'}`);
+  } else {
+    notifs.push(id);
+    showToast(`✓ Você será avisado quando ${gym?.name||'a academia'} esvaziar!`);
+    if(gym&&gym.occ<40) setTimeout(()=>showToast(`🔔 ${gym.name} está tranquila agora! (${gym.occ}%)`),3000);
+  }
+  DB.saveNotifs(notifs);
+  renderList();
+  if(selectedGym?.id==gymId) renderDetail(selectedGym);
+}
+</script>
+</body>
+</html>
