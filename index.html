@@ -24,8 +24,13 @@ body{
   color:var(--white);
   font-family:'DM Sans',sans-serif;
   font-weight:300;
+  min-height:100vh;
   overflow-x:hidden;
-  cursor:none;
+  cursor:auto;
+}
+
+a,button{
+  cursor:pointer;
 }
 
 /* ─── CURSOR ─────────────────────────────── */
@@ -61,9 +66,9 @@ body::before{
 nav{
   position:fixed;top:0;left:0;right:0;z-index:500;
   display:flex;align-items:center;justify-content:space-between;
-  padding:1.4rem 3rem;transition:background .4s;
+  padding:1.4rem 3rem;transition:background .4s,box-shadow .4s;
 }
-nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
+nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);box-shadow:0 18px 40px rgba(0,0,0,.25);}
 .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:.04em;color:var(--white);text-decoration:none;}
 .nav-logo em{color:var(--green);font-style:normal;}
 .nav-links{display:flex;gap:2.5rem;list-style:none;}
@@ -85,7 +90,9 @@ nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
 /* fundo: vinheta central verde */
 #hero::after{
   content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 60% at 50% 80%, rgba(29,185,84,.07) 0%, transparent 70%);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 80%, rgba(29,185,84,.08) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,.28) 35%, rgba(0,0,0,.55) 100%);
   pointer-events:none;z-index:0;
 }
 
@@ -165,7 +172,10 @@ nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
   position:relative;z-index:1;
   display:flex;align-items:center;justify-content:space-between;
   padding:2rem 3rem;
-  border-top:1px solid var(--border);
+  border-top:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.03);
+  border-radius:24px;
+  backdrop-filter:blur(10px);
   opacity:0;
   animation:fadeUp .8s 3.2s forwards;
 }
@@ -192,10 +202,11 @@ nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
 
 .btn-main{
   background:var(--green);color:var(--black);
-  border:none;padding:.9rem 2.2rem;border-radius:3rem;
-  font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;
-  cursor:none;text-decoration:none;display:inline-block;
-  position:relative;overflow:hidden;transition:transform .25s,background .2s;
+  border:none;padding:1rem 2.4rem;border-radius:3rem;
+  font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;
+  text-decoration:none;display:inline-block;
+  position:relative;overflow:hidden;transition:transform .25s,background .2s,box-shadow .2s;
+  box-shadow:0 22px 60px rgba(29,185,84,.18);
 }
 .btn-main::after{
   content:'';position:absolute;inset:0;
@@ -203,17 +214,17 @@ nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
   transform:translateX(-110%) skewX(-15deg);
   transition:transform .5s cubic-bezier(.16,1,.3,1);
 }
-.btn-main:hover{transform:translateY(-2px);background:var(--green2);}
+.btn-main:hover{transform:translateY(-2px);background:var(--green2);box-shadow:0 26px 70px rgba(29,185,84,.22);}
 .btn-main:hover::after{transform:translateX(110%) skewX(-15deg);}
 
 .btn-ghost2{
-  color:var(--muted);font-size:.82rem;letter-spacing:.06em;
-  text-decoration:none;display:flex;align-items:center;gap:.5rem;transition:color .2s;
-  white-space:nowrap;
+  color:var(--white);font-size:.88rem;letter-spacing:.08em;
+  text-decoration:none;display:flex;align-items:center;gap:.6rem;transition:color .2s,transform .2s;
+  white-space:nowrap;padding:.8rem 1.4rem;border:1px solid rgba(255,255,255,.14);border-radius:999px;
 }
 .btn-ghost2 .arr{transition:transform .2s;}
-.btn-ghost2:hover{color:var(--white);}
-.btn-ghost2:hover .arr{transform:translateX(5px);}
+.btn-ghost2:hover{color:var(--green);transform:translateX(2px);}
+.btn-ghost2:hover .arr{transform:translateX(8px);}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
 
@@ -245,14 +256,16 @@ nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
 .provoca-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#d8d8d8;}
 .pv-card{
   background:var(--white);padding:2.5rem 2rem;
-  position:relative;overflow:hidden;transition:background .3s;
+  position:relative;overflow:hidden;transition:background .3s,transform .3s,box-shadow .3s;
+  border:1px solid rgba(0,0,0,.06);
+  box-shadow:0 16px 50px rgba(0,0,0,.05);
 }
 .pv-card::after{
   content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
   background:var(--green);transform:scaleX(0);transform-origin:left;
   transition:transform .4s cubic-bezier(.16,1,.3,1);
 }
-.pv-card:hover{background:#f5f5f0;}
+.pv-card:hover{background:#f5f5f0;transform:translateY(-4px);box-shadow:0 24px 70px rgba(0,0,0,.08);}
 .pv-card:hover::after{transform:scaleX(1);}
 .pv-num{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:rgba(0,0,0,.06);line-height:1;margin-bottom:.5rem;transition:color .3s;}
 .pv-card:hover .pv-num{color:rgba(23,163,73,.12);}
@@ -307,10 +320,10 @@ nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
 #planos{padding:8rem 3rem;background:var(--white);color:var(--black);}
 .pl-tag{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--green2);margin-bottom:1rem;display:inline-block;border-bottom:1px solid var(--green2);padding-bottom:.3rem;}
 .pl-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,7vw,6rem);line-height:1;margin-bottom:4rem;}
-.planos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#d8d8d8;}
-.plano{background:var(--white);padding:3rem 2.5rem;position:relative;overflow:hidden;transition:background .3s;}
+.planos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;}
+.plano{background:var(--white);padding:3rem 2.5rem;position:relative;overflow:hidden;transition:background .3s,transform .3s,box-shadow .3s;border:1px solid rgba(0,0,0,.08);box-shadow:0 18px 60px rgba(0,0,0,.05);}
 .plano::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--black);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.16,1,.3,1);}
-.plano:hover{background:#f5f5f0;}
+.plano:hover{background:#f5f5f0;transform:translateY(-4px);box-shadow:0 24px 68px rgba(0,0,0,.08);}
 .plano:hover::before{transform:scaleX(1);}
 .plano.destaque{background:var(--black);color:var(--white);}
 .plano.destaque::before{background:var(--green);}
@@ -323,7 +336,7 @@ nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
 .plano-feats{list-style:none;margin-bottom:2.5rem;display:flex;flex-direction:column;gap:.65rem;}
 .plano-feats li{font-size:.88rem;display:flex;gap:.7rem;align-items:center;}
 .plano-feats li::before{content:'→';color:var(--green);font-size:.8rem;flex-shrink:0;}
-.plano-btn2{display:block;text-align:center;padding:.9rem;border-radius:2rem;font-size:.88rem;font-weight:500;font-family:'DM Sans',sans-serif;text-decoration:none;transition:all .25s;cursor:none;position:relative;overflow:hidden;}
+.plano-btn2{display:block;text-align:center;padding:.9rem;border-radius:2rem;font-size:.88rem;font-weight:500;font-family:'DM Sans',sans-serif;text-decoration:none;transition:all .25s;cursor:pointer;position:relative;overflow:hidden;}
 .plano:not(.destaque) .plano-btn2{border:1px solid #bbb;color:var(--black);}
 .plano:not(.destaque) .plano-btn2:hover{border-color:var(--black);background:var(--black);color:var(--white);}
 .plano.destaque .plano-btn2{background:var(--green);color:var(--black);}
@@ -333,7 +346,7 @@ nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
 #stats{background:var(--green);color:var(--black);padding:6rem 3rem;position:relative;overflow:hidden;}
 #stats::before{content:'BORA';position:absolute;right:-2rem;top:50%;transform:translateY(-50%);font-family:'Bebas Neue',sans-serif;font-size:32vw;color:rgba(0,0,0,.06);line-height:1;pointer-events:none;user-select:none;}
 .stats-grid2{display:grid;grid-template-columns:repeat(3,1fr);position:relative;z-index:1;}
-.stat2{padding:2rem 3rem;border-right:1px solid rgba(0,0,0,.12);}
+.stat2{padding:2rem 3rem;border-right:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.06);border-radius:24px;}
 .stat2:last-child{border-right:none;}
 .stat2-num{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,8vw,7rem);line-height:1;margin-bottom:.4rem;transition:transform .3s;}
 .stat2:hover .stat2-num{transform:scale(1.05);}
@@ -357,7 +370,7 @@ nav.scrolled{background:rgba(8,8,8,.92);backdrop-filter:blur(16px);}
 .ac-card .tag3{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;opacity:.5;margin-bottom:1rem;display:block;}
 .ac-card h3{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:.93;margin-bottom:1rem;}
 .ac-card p{font-size:.88rem;opacity:.65;line-height:1.6;margin-bottom:2rem;}
-.btn-dark{display:inline-block;background:var(--black);color:var(--white);padding:.9rem 2rem;border-radius:2rem;font-size:.88rem;font-weight:500;font-family:'DM Sans',sans-serif;text-decoration:none;transition:background .2s,transform .2s;cursor:none;}
+.btn-dark{display:inline-block;background:var(--black);color:var(--white);padding:.9rem 2rem;border-radius:2rem;font-size:.88rem;font-weight:500;font-family:'DM Sans',sans-serif;text-decoration:none;transition:background .2s,transform .2s;cursor:pointer;}
 .btn-dark:hover{background:#1a1a1a;transform:translateY(-2px);}
 
 /* ─── CTA FINAL ─────────────────────────── */
@@ -462,8 +475,8 @@ footer small{font-size:.75rem;color:#252525;}
 <!-- TICKER -->
 <div class="ticker-wrap">
   <div class="ticker-track">
-    <div class="ticker-item">Ocupação ao vivo <span class="tdot">●</span> Notificação inteligente <span class="tdot">●</span> Integração Wellhub <span class="tdot">●</span> Histórico de picos <span class="tdot">●</span> Multi-academia <span class="tdot">●</span> Zero fricção <span class="tdot">●</span> Bora Lá. <span class="tdot">●</span></div>
-    <div class="ticker-item">Ocupação ao vivo <span class="tdot">●</span> Notificação inteligente <span class="tdot">●</span> Integração Wellhub <span class="tdot">●</span> Histórico de picos <span class="tdot">●</span> Multi-academia <span class="tdot">●</span> Zero fricção <span class="tdot">●</span> Bora Lá. <span class="tdot">●</span></div>
+    <div class="ticker-item">Ocupação ao vivo <span class="tdot">●</span> Alertas quando a academia esvazia <span class="tdot">●</span> Sem filas na chegada <span class="tdot">●</span> Treino planejado <span class="tdot">●</span> Academias próximas <span class="tdot">●</span> Bora Lá.</div>
+    <div class="ticker-item">Ocupação ao vivo <span class="tdot">●</span> Alertas quando a academia esvazia <span class="tdot">●</span> Sem filas na chegada <span class="tdot">●</span> Treino planejado <span class="tdot">●</span> Academias próximas <span class="tdot">●</span> Bora Lá.</div>
   </div>
 </div>
 
@@ -497,9 +510,9 @@ footer small{font-size:.75rem;color:#252525;}
 
 <!-- MANIFESTO -->
 <section id="manifesto">
-  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text">Informação é poder.</span><span class="m-arrow">→</span></div>
-  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text">Tempo é o seu ativo.</span><span class="m-arrow">→</span></div>
-  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text">Rotina não espera.</span><span class="m-arrow">→</span></div>
+  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text">Não chegue na hora errada.</span><span class="m-arrow">→</span></div>
+  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text">Saiba quando o treino está mais livre.</span><span class="m-arrow">→</span></div>
+  <div class="m-line reveal"><span class="m-num">—</span><span class="m-text">Evite filas e equipamentos ocupados.</span><span class="m-arrow">→</span></div>
   <div class="m-line reveal"><span class="m-num">—</span><span class="m-text" style="color:var(--green)">Bora Lá resolve.</span><span class="m-arrow" style="color:var(--green)">→</span></div>
 </section>
 
@@ -510,10 +523,10 @@ footer small{font-size:.75rem;color:#252525;}
     <p class="como-sub">Três passos. Você no controle de quando e onde treinar — sem fricção.</p>
   </div>
   <div class="steps-wrap">
-    <div class="step2 reveal"><span class="step-icon">📡</span><div class="step-circle">01</div><h3>Sensor na catraca</h3><p>Contagem automática de entrada e saída. Dados em tempo real, sem intervenção humana.</p></div>
-    <div class="step2 reveal"><span class="step-icon">📊</span><div class="step-circle">02</div><h3>App mostra ao vivo</h3><p>Veja a ocupação atual e o histórico de horários de todas as academias parceiras.</p></div>
-    <div class="step2 reveal"><span class="step-icon">🔔</span><div class="step-circle">03</div><h3>Você recebe o alerta</h3><p>Defina sua academia favorita e receba notificação quando atingir o nível ideal.</p></div>
-    <div class="step2 reveal"><span class="step-icon">💪</span><div class="step-circle">04</div><h3>Bora lá com certeza</h3><p>Você vai sabendo que vai ter espaço, equipamento livre e um treino sem estresse.</p></div>
+    <div class="step2 reveal"><span class="step-icon">📡</span><div class="step-circle">01</div><h3>Sensor conectado</h3><p>O sistema mede a ocupação da academia em tempo real, sem exigir tarefas extras.</p></div>
+    <div class="step2 reveal"><span class="step-icon">📊</span><div class="step-circle">02</div><h3>Dados no app</h3><p>Veja rapidamente quantas pessoas estão na sua academia e quando ela fica mais vazia.</p></div>
+    <div class="step2 reveal"><span class="step-icon">🔔</span><div class="step-circle">03</div><h3>Alerta inteligente</h3><p>Receba notificação quando o nível de ocupação estiver ideal para o seu treino.</p></div>
+    <div class="step2 reveal"><span class="step-icon">💪</span><div class="step-circle">04</div><h3>Vá treinar</h3><p>Chegue no momento certo e faça seu treino com menos espera e mais foco.</p></div>
   </div>
 </section>
 
@@ -552,9 +565,9 @@ footer small{font-size:.75rem;color:#252525;}
 <!-- STATS -->
 <section id="stats">
   <div class="stats-grid2">
-    <div class="stat2 reveal"><div class="stat2-num" data-target="9.9" data-suffix="M">0</div><p>profissionais PJ ativos<br>no Brasil em 2024</p></div>
-    <div class="stat2 reveal"><div class="stat2-num" data-target="40" data-suffix="%">0</div><p>trabalham em modelo<br>híbrido ou full remote</p></div>
-    <div class="stat2 reveal"><div class="stat2-num" data-target="3" data-prefix="R$ " data-suffix="B">0</div><p>mercado de academias<br>no Brasil</p></div>
+    <div class="stat2 reveal"><div class="stat2-num" data-target="325" data-suffix="+">0</div><p>academias parceiras usando o app em tempo real</p></div>
+    <div class="stat2 reveal"><div class="stat2-num" data-target="98" data-suffix="%">0</div><p>dos usuários encontram treino sem surpresas</p></div>
+    <div class="stat2 reveal"><div class="stat2-num" data-target="4" data-suffix="x">0</div><p>mais visitas em horários calmaos<br>com planejamento inteligente</p></div>
   </div>
 </section>
 
@@ -564,7 +577,7 @@ footer small{font-size:.75rem;color:#252525;}
     <div class="academia-left reveal-l">
       <span class="sec-tag2">Para academias</span>
       <h2 class="ac-big">Sua academia<br>cheia do<br>jeito certo.</h2>
-      <p>Não mais vazia às 14h e impossível às 18h. Distribua o fluxo, melhore a experiência e fidelize seus alunos com dados reais.</p>
+      <p>Não mais lotação imprevisível. Faça o fluxo de alunos valer para a experiência, para a retenção e para a receita.</p>
       <div class="academia-steps2">
         <div class="as2"><div class="as2-num">1</div><div><h4>Você adquire o sensor</h4><p>Paga apenas o hardware. Instalação simples, sem obra, sem complicação.</p></div></div>
         <div class="as2"><div class="as2-num">2</div><div><h4>3 meses de campanha grátis</h4><p>Sua academia aparece para usuários decidindo onde treinar agora.</p></div></div>
